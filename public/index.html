@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/css/bulma/bulma.min.css" />
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/d3.js"></script>
+    <script src="/js/d3-sankey/sankey.js"></script>
+    <script src="/js/canvg/canvg.js"></script>
+    <script src="/js/rgbcolor/rgbcolor.js"></script>
+    <script src="/js/sankeymatic.js"></script>
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Sankey Diagram</h1>
+      <div>
+        <h2>Income</h2>
+        <div class="item-input">
+          <label for="income">Income 1</label>
+          <input type="text" id="income" class="input" />
+          <button type="button" class="button is-danger is-outlined">Delete</button>
+        </div>
+        <button type="button" class="button">Add</button>
+      </div>
+      <div>
+        <h2>Expenses</h2>
+        <div class="item-input">
+          <label for="expense">Expense 2</label>
+          <input type="text" id="expense" class="input" />
+          <button type="button" class="button is-danger is-outlined">Delete</button>
+        </div>
+        <button type="button" class="button">Add</button>
+      </div>
+      <button type="button" class="button is-primary" id="generate-button">Generate</button>
+    <script src="/js/main.js"></script>
+  </body>
+</html>
