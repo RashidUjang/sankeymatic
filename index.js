@@ -16,8 +16,6 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // Virtually expose the files from certain node_modules
 app.use("/css/bulma/bulma.min.css", express.static(path.join(__dirname, "node_modules/bulma/css/bulma.min.css")));
-app.use("/js/d3.js", express.static(path.join(__dirname, "node_modules/d3/dist/d3.min.js")));
-app.use("/js/d3-sankey/sankey.js", express.static(path.join(__dirname, "node_modules/d3-sankey/dist/d3-sankey.min.js")));
 
 app.get("/user/walo", (req, res) => {
   console.log("Got a request at /user/walo!");

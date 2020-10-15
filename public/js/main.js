@@ -1,3 +1,5 @@
+import {process_sankey} from "./sankeymatic.js";
+
 // Add functionalities for both Income and Expense
 const addIncomeButton = document.getElementById("btn-add-income");
 const addExpensesButton = document.getElementById("btn-add-expenses");
@@ -22,6 +24,14 @@ generateButton.addEventListener("click", processSankey)
 
 function processSankey(e) {
     // Get Income and Expense
-    document.getElementsByClassName("item-expenses");
-    document.getElementsByClassName("item-income");
+    process_sankey();
+}
+
+const tabButtons = document.querySelectorAll('.tabs ul li a');
+tabButtons.forEach((val, ind, arr) => {
+    val.addEventListener('click', applyIsActive);
+  });
+
+function applyIsActive(e) {
+    e.preventDefault();
 }

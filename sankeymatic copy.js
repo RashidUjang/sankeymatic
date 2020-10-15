@@ -143,7 +143,7 @@ function produce_svg_code() {
   // Hack to put in a placeholder title & comment & background rectangle
   var svg_for_copying = document
     .getElementById("chart")
-    .innerHTML // Take out the 1st style declaration (may contain transparency-hint image):
+    .innerHTML// Take out the 1st style declaration (may contain transparency-hint image):
     .replace(/ style="[^"]+"/, "")
     // Insert some business in front of the first <g> tag:
     .replace(
@@ -232,13 +232,19 @@ function render_sankey(nodes_in, flows_in, config_in) {
 
   // Establish a list of 20 compatible colors to choose from:
   colorset = config_in.default_node_colorset;
-  d3_color_scale =
-    colorset === "A"
-      ? d3.scale.category20()
-      : colorset === "B"
-      ? d3.scale.category20b()
-      : d3.scale.category20c();
 
+  // Initialize the color of the ordinal scale to be from category 10, which is a value of 10 unique colours.
+  d3_color_scale = d3.scaleOrdinal(d3.schemeCategory10);
+  console.log(d3_color_scale.range());
+
+  // TODO: Set the proper colours
+//   d3_color_scale =
+//     colorset === "A"
+//       ? d3.scale.category20()
+//       : colorset === "B"
+//       ? d3.scale.category20b()
+//       : d3.scale.category20c();
+      
   // Fill in any un-set node colors up front so flows can inherit colors from them:
   nodes_in.forEach(function (node) {
     if (typeof node.color === "undefined" || node.color === "") {
@@ -250,8 +256,8 @@ function render_sankey(nodes_in, flows_in, config_in) {
         // If there are no 'word' characters, substitute a word-ish value
         // (rather than crash):
         var first_word = (/^\W*(\w+)/.exec(node.name) || ["", "not a word"])[1];
-        
         node.color = d3_color_scale(first_word);
+        console.log(node.color);
       }
     }
   });
@@ -307,13 +313,12 @@ function render_sankey(nodes_in, flows_in, config_in) {
     .nodePadding(node_padding)
     .size([graph_width, graph_height])
     .nodes(the_clean_json.nodes)
-    .links(the_clean_json.links)
-    .curvature(curvature)
-    .layout(50);
+    .links(the_clean_json.links);
+    // TODO: Update curvature and layout
+    //.curvature(curvature)
+    //.layout(50);
 
   // flow is a function returning coordinates and specs for each flow area
-  flow = sankey.link();
-  console.log(flow);
 
   link = svg
     .append("g")
@@ -322,7 +327,7 @@ function render_sankey(nodes_in, flows_in, config_in) {
     .enter()
     .append("path")
     .attr("class", "link")
-    .attr("d", flow) // embed coordinates
+    .attr("d", d3.sankeyLinkHorizontal()) // embed coordinates
     .style("fill", "none") // ensure no line gets drawn, just stroke
     .style("stroke-width", function (d) {
       return Math.max(1, d.dy);
