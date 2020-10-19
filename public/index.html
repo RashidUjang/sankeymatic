@@ -36,10 +36,10 @@
             <div class="tabs is-toggle">
               <ul>
                 <li class="is-active">
-                  <a href="">Budget</a>
+                  <a href="" id="budget-input-option">Budget</a>
                 </li>
                 <li>
-                  <a href="">General</a>
+                  <a href="" id="general-input-option">General</a>
                 </li>
               </ul>
             </div>
@@ -56,51 +56,36 @@
                     <th>Action</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <th>1</th>
-                    <td>RM 5,000</td>
-                    <td>Salary</td>
-                    <td>None</td>
-                    <td><button type="button" class="button is-danger is-outlined is-small">
-                      Delete
-                    </button></td>
-                  </tr>
-                </tbody>
+                <tbody></tbody>
               </table>
             </div>
             <button type="button" class="button" id="button-add-income">
               Add
             </button>
-            <div id="expenses-list">
+            <div>
               <h2 class="title is-2">Expenses</h2>
+            </div>
+            <div id="expenses-list">
               <div class="item-expenses">
-                <label for="expenses">Expense 2</label>
-                <input type="text" id="expenses" class="input" />
-                <label for="parent-select-expenses-1">Parent Node:</label>
-                <div class="select">
-                  <select name="" id="parent-select-expenses-1">
-                    <option value="">Food</option>
-                    <option value="">Transportation</option>
-                  </select>
-                </div>
-                <label for="category-select-expenses-1">Category:</label>
-                <div class="select">
-                  <select name="" id="category-select-expenses-1">
-                    <option value="">Snacks</option>
-                    <option value="">Groceries</option>
-                  </select>
-                </div>
-                <button type="button" class="button is-danger is-outlined">
-                  Delete
-                </button>
+                <table class="table is-fullwidth">
+                  <thead>
+                    <tr>
+                      <th>No.</th>
+                      <th>Amount</th>
+                      <th>Category</th>
+                      <th>Parent Category</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
               </div>
               <button type="button" class="button" id="button-add-expenses">
                 Add
               </button>
             </div>
           </div>
-          <div id="general-input-style">
+          <div class="is-hidden" id="general-input-style">
             <div class="control">
               <textarea class="textarea" id="flows_in" rows="22" cols="40">
   ' Type a list of Flows, like this:
@@ -125,7 +110,6 @@
               >
             </div>
           </div>
-
           <button type="button" class="button is-primary" id="generate-button">
             Generate
           </button>
@@ -622,7 +606,7 @@
               <label for="income">Amount</label>
               <input type="text" id="income" class="input" />
               <label for="checkbox-new">New Category?</label>
-              <input type="checkbox" id="checkbox-new">
+              <input type="checkbox" id="checkbox-new" />
               <label for="parent-select-income-1">Parent Node:</label>
               <div class="select">
                 <select name="" id="parent-select-income-1">
@@ -635,6 +619,40 @@
                 <select name="" id="category-select-income-1">
                   <option value="">Salary</option>
                   <option value="">Allowances</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <footer class="card-footer">
+            <a hred="" class="card-footer-item">Add</a>
+          </footer>
+        </div>
+      </div>
+      <button class="modal-close is-large"></button>
+    </div>
+    <div class="modal" id="modal-expense">
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class="card">
+          <div class="card-content">
+            <h3 class="title is-3">Add Expense</h3>
+            <div class="item-expenses">
+              <label for="expenses">Amount</label>
+              <input type="text" id="expenses" class="input" />
+              <label for="checkbox-new-income">New Category?</label>
+              <input type="checkbox" id="checkbox-new-income" />
+              <label for="parent-select-expenses-1">Parent Node:</label>
+              <div class="select">
+                <select name="" id="parent-select-expenses-1">
+                  <option value="">Food</option>
+                  <option value="">Transportation</option>
+                </select>
+              </div>
+              <label for="category-select-expenses-1">Category:</label>
+              <div class="select">
+                <select name="" id="category-select-expenses-1">
+                  <option value="">Snacks</option>
+                  <option value="">Groceries</option>
                 </select>
               </div>
             </div>
