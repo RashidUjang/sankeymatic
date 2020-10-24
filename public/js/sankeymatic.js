@@ -13,7 +13,6 @@ Requires:
 import {
   escape_html,
   is_numeric,
-  remove_zeroes,
   fix_separators,
   format_a_value,
 } from "./util.js";
@@ -250,7 +249,7 @@ function render_sankey(nodes_in, flows_in, config_in) {
         // If there are no 'word' characters, substitute a word-ish value
         // (rather than crash):
         var first_word = (/^\W*(\w+)/.exec(node.name) || ["", "not a word"])[1];
-        
+
         node.color = d3_color_scale(first_word);
       }
     }
@@ -487,7 +486,7 @@ function render_sankey(nodes_in, flows_in, config_in) {
 
 // MAIN FUNCTION:
 // Gather inputs from user; validate them; render updated diagram
-function process_sankey() {
+function process_sankey(inputNodeList) {
   var source_lines = [],
     good_flows = [],
     good_node_lines = [],
@@ -570,6 +569,94 @@ function process_sankey() {
     );
   }
 
+  // Parse all the input lines, storing good ones vs bad ones:
+  function parseTextInputToFlows(data) {
+    for (line_ix = 0; line_ix < data.length; line_ix += 1) {
+      // Does this line match the basic format?
+      line_in = data[line_ix].trim();
+      // Is it a comment? Skip it entirely:
+      if (line_in.match(/^'/)) {
+        continue;
+      }
+      // Try to match the line to a Node spec:
+      matches = line_in.match(
+        /^:(.+)\ #([0-9A-F]{0,6})?(\.\d{1,4})?\s*(>>|<<)*\s*(>>|<<)*$/i
+      );
+      if (matches !== null) {
+        good_node_lines.push({
+          name: matches[1].trim(),
+          color: matches[2],
+          opacity: matches[3],
+          inherit1: matches[4],
+          inherit2: matches[5],
+        });
+        // No need to process this as a Data line, let's move on:
+        continue;
+      }
+
+      // Try to match the line to a Data spec:
+      matches = line_in.match(/^(.+)\[([\d\.\s\+\-]+)\](.+)$/);
+      if (matches !== null) {
+        amount_in = matches[2].replace(/\s/g, "");
+        // The Amount looked trivially like a number; reject the line
+        // if it really isn't:
+        if (!is_numeric(amount_in)) {
+          bad_lines.push({
+            value: line_in,
+            message: "The Amount is not a valid decimal number.",
+          });
+          // The Sankey library doesn't currently support negative numbers or 0:
+        } else if (amount_in <= 0) {
+          bad_lines.push({
+            value: line_in,
+            message: "Amounts must be greater than 0.",
+          });
+        } else {
+          // All seems well, save it as good (even if 0):
+          good_flows.push({
+            source: matches[1].trim(),
+            target: matches[3].trim(),
+            amount: amount_in,
+          });
+          // We need to know the maximum precision of the inputs (greatest
+          // # of characters to the RIGHT of the decimal) for some error
+          // checking operations (& display) later:
+          max_places = Math.max(
+            max_places,
+            (amount_in.split(/\./)[1] || "").length
+          );
+        }
+        // Did something make the input not match the pattern?:
+      } else if (line_in !== "") {
+        bad_lines.push({
+          value: line_in,
+          message: "The line is not in the format: Source [Amount] Target",
+        });
+      }
+      // and the final 'else' case is: a blank line.
+      // We just skip those silently, so you can separate your input lines with
+      // whitespace if desired.
+    }
+  }
+
+  function parseGeneralInputToFlows(inputNodeList) {
+    inputNodeList.forEach((val, ind, arr) => {
+      if (val["type"] == "income") {
+        good_flows.push({
+          source: val["categoryID"],
+          target: "Budget",
+          amount: val["amount"]
+        });
+      } else if (val["type"] == "expense") {
+        good_flows.push({
+          source: "Budget",
+          target: val["categoryID"],
+          amount: val["amount"]
+        });
+      }
+    }) 
+  }
+
   // BEGIN by resetting all messages:
   messages_el.innerHTML = "";
 
@@ -587,77 +674,20 @@ function process_sankey() {
   }
 
   // Flows validation:
-
   // parse into structures: approved_nodes, approved_flows, approved_config
   source_lines = raw_source.split("\n");
 
-  // parse all the input lines, storing good ones vs bad ones:
-  for (line_ix = 0; line_ix < source_lines.length; line_ix += 1) {
-    // Does this line match the basic format?
-    line_in = source_lines[line_ix].trim();
-    // Is it a comment? Skip it entirely:
-    if (line_in.match(/^'/)) {
-      continue;
-    }
-    // Try to match the line to a Node spec:
-    matches = line_in.match(
-      /^:(.+)\ #([0-9A-F]{0,6})?(\.\d{1,4})?\s*(>>|<<)*\s*(>>|<<)*$/i
-    );
-    if (matches !== null) {
-      good_node_lines.push({
-        name: matches[1].trim(),
-        color: matches[2],
-        opacity: matches[3],
-        inherit1: matches[4],
-        inherit2: matches[5],
-      });
-      // No need to process this as a Data line, let's move on:
-      continue;
-    }
-
-    // Try to match the line to a Data spec:
-    matches = line_in.match(/^(.+)\[([\d\.\s\+\-]+)\](.+)$/);
-    if (matches !== null) {
-      amount_in = matches[2].replace(/\s/g, "");
-      // The Amount looked trivially like a number; reject the line
-      // if it really isn't:
-      if (!is_numeric(amount_in)) {
-        bad_lines.push({
-          value: line_in,
-          message: "The Amount is not a valid decimal number.",
-        });
-        // The Sankey library doesn't currently support negative numbers or 0:
-      } else if (amount_in <= 0) {
-        bad_lines.push({
-          value: line_in,
-          message: "Amounts must be greater than 0.",
-        });
-      } else {
-        // All seems well, save it as good (even if 0):
-        good_flows.push({
-          source: matches[1].trim(),
-          target: matches[3].trim(),
-          amount: amount_in,
-        });
-        // We need to know the maximum precision of the inputs (greatest
-        // # of characters to the RIGHT of the decimal) for some error
-        // checking operations (& display) later:
-        max_places = Math.max(
-          max_places,
-          (amount_in.split(/\./)[1] || "").length
-        );
-      }
-      // Did something make the input not match the pattern?:
-    } else if (line_in !== "") {
-      bad_lines.push({
-        value: line_in,
-        message: "The line is not in the format: Source [Amount] Target",
-      });
-    }
-    // and the final 'else' case is: a blank line.
-    // We just skip those silently, so you can separate your input lines with
-    // whitespace if desired.
+  if (
+    document
+      .getElementById("budget-input-option")
+      .parentElement.classList.contains("is-active")
+  ) {
+    parseGeneralInputToFlows(inputNodeList);
+  } else {
+    parseTextInputToFlows(source_lines);
   }
+
+  console.log(good_flows);
 
   // We know max_places now, so we can derive the smallest important difference.
   // Defining it as smallest-input-decimal/10; this lets us work around various

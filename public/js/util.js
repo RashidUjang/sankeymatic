@@ -50,4 +50,4 @@ function format_a_value(number_in, places, separators, prefix, suffix,
         + suffix;
 }
 
-export {escape_html, is_numeric, remove_zeroes, fix_separators, format_a_value};
+export {escape_html, is_numeric, fix_separators, format_a_value};

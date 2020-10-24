@@ -74,7 +74,7 @@ function loadListData(nodeList) {
   });
 }
 
-// Add the
+// Add all data into nodeList
 function addDataIntoTable(data, ind) {
   const tr = document.createElement("tr");
   const th = document.createElement("th");
@@ -236,7 +236,7 @@ const generateButton = document.getElementById("generate-button");
 generateButton.addEventListener("click", processSankey);
 
 function processSankey(e) {
-  process_sankey();
+  process_sankey(nodeList);
 }
 
 const tabButtons = document.querySelectorAll(".tabs ul li a");
