@@ -16,3 +16,7 @@ CREATE TABLE category(
     category_name VARCHAR(255),
     parent_category_id SMALLINT
 );
+
+-- Insert dummy data into category table
+INSERT INTO category (category_type, category_name, parent_category_id)
+VALUES (0, 'Salary', NULL);

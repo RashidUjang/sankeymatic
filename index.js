@@ -1,15 +1,18 @@
 const express = require("express");
 const app = express();
 const path = require("path");
+// Need to use destructuring syntax here, or else would need to access it with pool.pool
+const { pool } = require("./db");
 const port = 3000;
 
 app.listen(port, () => {
   console.log(`Starting server and listening at port ${port}`);
 });
 
-app.use("/user/walo", (req, res) => {
+app.use("/user/walo", async (req, res) => {
   console.log(`The request's HTTP Method is: ${req.method}`);
   res.send("Got a GET request at /user/walo from the use method");
+  console.log(await pool.query("SELECT * FROM category"));
 });
 
 app.use(express.static(path.join(__dirname, "public")));
