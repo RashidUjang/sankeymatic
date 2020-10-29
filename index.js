@@ -5,12 +5,37 @@ const path = require("path");
 const { pool } = require("./db");
 const port = 3000;
 
+// Enables the use of methods on req such as req.body
+app.use(express.json());
+
 app.listen(port, () => {
   console.log(`Starting server and listening at port ${port}`);
 });
 
+// Return the list at /budget
+app.get("/budget", async (req, res) => {
+  try {
+    console.log(req.body);
+    res.send("woopwoop");
+  } catch(err) {
+    console.error(err.message);
+  }
+});
+
+// Post the received records into record
+app.post("/budget", async (req, res) => {
+  try {
+    const {record_type, amount, category_id} = req.body;
+    const newRecord = await pool.query(`INSERT INTO record (record_type, amount, category_id) VALUES (${record_type}, ${amount}, ${category_id});`);
+    res.json(newRecord);
+  } catch(err) {
+    console.error(err.message);
+  }
+});
+
 app.use("/user/walo", async (req, res) => {
   console.log(`The request's HTTP Method is: ${req.method}`);
+  console.log(req);
   res.send("Got a GET request at /user/walo from the use method");
   console.log(await pool.query("SELECT * FROM category"));
 });
