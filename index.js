@@ -7,53 +7,66 @@ const port = 3000;
 
 // Enables the use of methods on req such as req.body
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
+// Start server and listen on a part
 app.listen(port, () => {
   console.log(`Starting server and listening at port ${port}`);
 });
 
-// Return the list at /budget
-app.get("/budget", async (req, res) => {
-  try {
-    console.log(req.body);
-    res.send("woopwoop");
-  } catch(err) {
-    console.error(err.message);
-  }
-});
-
-// Post the received records into record
-app.post("/budget", async (req, res) => {
-  try {
-    const {record_type, amount, category_id} = req.body;
-    const newRecord = await pool.query(`INSERT INTO record (record_type, amount, category_id) VALUES (${record_type}, ${amount}, ${category_id});`);
-    res.json(newRecord);
-  } catch(err) {
-    console.error(err.message);
-  }
-});
-
-app.use("/user/walo", async (req, res) => {
-  console.log(`The request's HTTP Method is: ${req.method}`);
-  console.log(req);
-  res.send("Got a GET request at /user/walo from the use method");
-  console.log(await pool.query("SELECT * FROM category"));
-});
-
-app.use(express.static(path.join(__dirname, "public")));
-
 // Virtually expose the files from certain node_modules
 app.use("/css/bulma/bulma.min.css", express.static(path.join(__dirname, "node_modules/bulma/css/bulma.min.css")));
 
-app.get("/user/walo", (req, res) => {
-  console.log("Got a request at /user/walo!");
-  // TODO: What is .send()? What other ways can we send the response back?
-  res.send("Got a GET request at /user/walo from the get method");
+// Return all records from category
+app.get("/budget", async (req, res) => {
+  try {
+    const recordList = await pool.query(`SELECT * FROM category;`);
+    res.send(recordList.rows);
+  } catch(err) {
+    console.error(err.message);
+  }
 });
 
-// TODO: In what form is req and res?
-app.get("/user", (req, res) => {
-  console.log("Got a request at /user!");
-  // TODO: What is .send()? What other ways can we send the response back?
-  res.send("Got a GET request at /user");
+// Post the received records into the record table
+app.post("/budget", async (req, res) => {
+  try {
+    const {record_type, amount, category_id} = req.body;
+    const newRecord = await pool.query(`INSERT INTO record (record_type, amount, category_id) VALUES (${record_type}, ${amount}, ${category_id}) RETURNING *;`);
+    res.json(newRecord.rows);
+  } catch(err) {
+    console.error(err.message);
+  }
+});
+
+// Get a specific record according to its id
+app.get("/budget/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const recordList = await pool.query(`SELECT * FROM category WHERE record_id = ${id};`);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+// Update a record
+app.put("/budget/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const  { record_type, amount, category_id} = req.body;
+    const updateRecord = await pool.query(`UPDATE record SET record_type = ${record_type}, amount = ${amount}, category_id = ${category_id} WHERE record_id = ${id}`)
+    res.json("Record was updated.");
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+// Delete a record
+app.delete("/budget/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const recordList = await pool.query(`DELETE FROM record WHERE record_id = ${id};`);
+    res.json("Record was deleted.");
+  } catch (err) {
+    console.error(err.message);
+  }
 });
