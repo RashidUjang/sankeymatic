@@ -1,33 +1,6 @@
 import { process_sankey } from "./sankeymatic.js";
 
-// Mock data
-let nodeList = [
-  {
-    type: "income",
-    amount: 5000,
-    categoryID: "Salary",
-    parentCategoryID: "None",
-  },
-  {
-    type: "income",
-    amount: 3000,
-    categoryID: "Allowances",
-    parentCategoryID: "None",
-  },
-  {
-    type: "expense",
-    amount: 1200,
-    categoryID: "Food",
-    parentCategoryID: "None",
-  },
-  {
-    type: "expense",
-    amount: 6800,
-    categoryID: "Transportation",
-    parentCategoryID: "None",
-  },
-];
-
+// TODO: Replace this with fetch
 let categoryList = [
   {
     categoryID: 0,
@@ -76,6 +49,7 @@ function loadListData(nodeList) {
 
 // Add all data into nodeList
 function addDataIntoTable(data, ind) {
+  console.log(data);
   const tr = document.createElement("tr");
   const th = document.createElement("th");
   let td = document.createElement("td");
@@ -105,16 +79,19 @@ function addDataIntoTable(data, ind) {
   tr.appendChild(td);
 
   // Choose depending on type to appear in the income or expenses table
-  if (data["type"] == "income") {
+  if (data["record_type"] == "0") {
     document.querySelector("#income-list tbody").appendChild(tr);
   }
-  if (data["type"] == "expense") {
+  if (data["record_type"] == "1") {
     document.querySelector("#expenses-list tbody").appendChild(tr);
   }
 }
+
 // Call setup functions upon window load
 window.onload = function () {
-  loadListData(nodeList);
+  fetch("http://localhost:3000/budget/record")
+    .then(res => res.json())
+    .then(data => loadListData(data));
 };
 
 // Add functionalities for both Income and Expense
@@ -196,7 +173,7 @@ const addExpensesButtonModal = document.getElementById(
 addIncomeButtonModal.addEventListener("click", addNode);
 addExpensesButtonModal.addEventListener("click", addNode);
 
-// Function to add node and
+// Function to add node
 function addNode(e) {
   e.preventDefault();
   let record;
@@ -225,10 +202,9 @@ function addNode(e) {
 
   // TODO: Replace with backend API. Only if successful call the toast.
   nodeList.push(record);
-  
+
   // Display Toast Message
   document.querySelector(".notification").classList.toggle("is-hidden");
- 
 }
 
 // Process Sankey

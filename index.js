@@ -17,10 +17,20 @@ app.listen(port, () => {
 // Virtually expose the files from certain node_modules
 app.use("/css/bulma/bulma.min.css", express.static(path.join(__dirname, "node_modules/bulma/css/bulma.min.css")));
 
-// Return all records from category
-app.get("/budget", async (req, res) => {
+// Return all rows from category
+app.get("/budget/category", async (req, res) => {
   try {
-    const recordList = await pool.query(`SELECT * FROM category;`);
+    const categoryList = await pool.query(`SELECT * FROM category;`);
+    res.send(categoryList.rows);
+  } catch(err) {
+    console.error(err.message);
+  }
+});
+
+// Return all rows from record
+app.get("/budget/record", async (req, res) => {
+  try {
+    const recordList = await pool.query(`SELECT * FROM record;`);
     res.send(recordList.rows);
   } catch(err) {
     console.error(err.message);
@@ -28,7 +38,7 @@ app.get("/budget", async (req, res) => {
 });
 
 // Post the received records into the record table
-app.post("/budget", async (req, res) => {
+app.post("/budget/record", async (req, res) => {
   try {
     const {record_type, amount, category_id} = req.body;
     const newRecord = await pool.query(`INSERT INTO record (record_type, amount, category_id) VALUES (${record_type}, ${amount}, ${category_id}) RETURNING *;`);
@@ -39,7 +49,7 @@ app.post("/budget", async (req, res) => {
 });
 
 // Get a specific record according to its id
-app.get("/budget/:id", async (req, res) => {
+app.get("/budget/record/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const recordList = await pool.query(`SELECT * FROM category WHERE record_id = ${id};`);
@@ -49,7 +59,7 @@ app.get("/budget/:id", async (req, res) => {
 });
 
 // Update a record
-app.put("/budget/:id", async (req, res) => {
+app.put("/budget/record/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const  { record_type, amount, category_id} = req.body;
@@ -61,7 +71,7 @@ app.put("/budget/:id", async (req, res) => {
 });
 
 // Delete a record
-app.delete("/budget/:id", async (req, res) => {
+app.delete("/budget/record/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const recordList = await pool.query(`DELETE FROM record WHERE record_id = ${id};`);
