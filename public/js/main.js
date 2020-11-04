@@ -1,44 +1,9 @@
 import { process_sankey } from "./sankeymatic.js";
+import { matchCategory } from "./util.js";
 
-// TODO: Replace this with fetch
-let categoryList = [
-  {
-    categoryID: 0,
-    categoryName: "None",
-    parentCategoryID: "",
-    type: "income",
-  },
-  {
-    categoryID: 1,
-    categoryName: "Salary",
-    parentCategoryID: "",
-    type: "income",
-  },
-  {
-    categoryID: 2,
-    categoryName: "Allowances",
-    parentCategoryID: "",
-    type: "income",
-  },
-  {
-    categoryID: 3,
-    categoryName: "Food",
-    parentCategoryID: "",
-    type: "expense",
-  },
-  {
-    categoryID: 4,
-    categoryName: "Transportation",
-    parentCategoryID: "",
-    type: "expense",
-  },
-  {
-    categoryID: 5,
-    categoryName: "Car",
-    parentCategoryID: 4,
-    type: "expense",
-  },
-];
+// List of all categories. TODO: Store in a non-global variable?
+let categoryList;
+let nodeList;
 
 // Load data into lists
 function loadListData(nodeList) {
@@ -49,24 +14,31 @@ function loadListData(nodeList) {
 
 // Add all data into nodeList
 function addDataIntoTable(data, ind) {
-  console.log(data);
   const tr = document.createElement("tr");
   const th = document.createElement("th");
   let td = document.createElement("td");
+
+  const categoryName = matchCategory(data["category_id"], categoryList, 0);
+  const amount = data["amount"];
+  const parentCategoryName = matchCategory(
+    data["category_id"],
+    categoryList,
+    1
+  );
 
   // Add index number, amount, category and parent category to table
   th.appendChild(document.createTextNode(ind));
   tr.appendChild(th);
 
-  td.appendChild(document.createTextNode(data["amount"]));
+  td.appendChild(document.createTextNode(amount));
   tr.appendChild(td);
 
   td = document.createElement("td");
-  td.appendChild(document.createTextNode(data["categoryID"]));
+  td.appendChild(document.createTextNode(categoryName));
   tr.appendChild(td);
 
   td = document.createElement("td");
-  td.appendChild(document.createTextNode(data["parentCategoryID"]));
+  td.appendChild(document.createTextNode(parentCategoryName));
   tr.appendChild(td);
 
   // Add button in action column
@@ -89,9 +61,28 @@ function addDataIntoTable(data, ind) {
 
 // Call setup functions upon window load
 window.onload = function () {
-  fetch("http://localhost:3000/budget/record")
-    .then(res => res.json())
-    .then(data => loadListData(data));
+  let urls = [
+    "http://localhost:3000/budget/record",
+    "http://localhost:3000/budget/category",
+  ];
+
+  let requests = urls.map((val, ind, arr) => fetch(val));
+
+  Promise.all(requests)
+    .then((responses) => {
+      // Calls .json() on each response object using the .map() function, which gives an array of Promises
+      // This array of Promises is then inserted into Promie.all() and returns a single Promise which w
+      // This Promise is then returned to allow the running of the next .then() method which when resolved will contain the json body content of all the Promises in the fetch
+      return Promise.all(responses.map((response) => response.json()));
+    })
+    .then((data) => {
+      nodeList = data[0];
+      categoryList = data[1];
+      // export { categoryList }
+
+      // Load initial list data
+      loadListData(nodeList);
+    });
 };
 
 // Add functionalities for both Income and Expense
@@ -242,3 +233,5 @@ function applyIsActive(e) {
       .classList.toggle("is-hidden");
   }
 }
+
+export { categoryList };

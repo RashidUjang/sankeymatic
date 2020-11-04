@@ -15,7 +15,10 @@ import {
   is_numeric,
   fix_separators,
   format_a_value,
+  matchCategory
 } from "./util.js";
+
+import { categoryList } from "./main.js"
 
 // toggle_panel: hide or show one of the interface panels, by name
 function toggle_panel(el_id) {
@@ -640,18 +643,25 @@ function process_sankey(inputNodeList) {
   }
 
   function parseGeneralInputToFlows(inputNodeList) {
+    console.log("inputNodeList: ");
+    console.dir(inputNodeList);
     inputNodeList.forEach((val, ind, arr) => {
-      if (val["type"] == "income") {
+      if (val["record_type"] == 0) {
+        console.log(`Record type ${ind} is income`);
+        console.log(val);
         good_flows.push({
-          source: val["categoryID"],
+          source: matchCategory(val["category_id"], categoryList, 0),
           target: "Budget",
-          amount: val["amount"]
+          amount: val["amount"].toString()
         });
-      } else if (val["type"] == "expense") {
+        console.log(good_flows);
+      } else if (val["record_type"] == 1) {
+        console.log(`Record type ${ind} is expense`);
+        console.log(val);
         good_flows.push({
           source: "Budget",
-          target: val["categoryID"],
-          amount: val["amount"]
+          target: matchCategory(val["category_id"], categoryList, 0),
+          amount: val["amount"].toString()
         });
       }
     }) 
@@ -682,12 +692,16 @@ function process_sankey(inputNodeList) {
       .getElementById("budget-input-option")
       .parentElement.classList.contains("is-active")
   ) {
+    console.log("Using budget input style");
     parseGeneralInputToFlows(inputNodeList);
   } else {
+    console.log("Using general input style");
     parseTextInputToFlows(source_lines);
   }
 
   console.log(good_flows);
+  
+  
 
   // We know max_places now, so we can derive the smallest important difference.
   // Defining it as smallest-input-decimal/10; this lets us work around various
@@ -826,6 +840,7 @@ function process_sankey(inputNodeList) {
     // e.g. Clinton #CCDDEE
     // e.g. Gondor "Legolas" #998877.25
     // Look for an additional string starting with # for color info
+    console.log(flow);
     matches = flow.target.match(/^(.+)\s+(#\S+)$/);
     if (matches !== null) {
       // IFF the # string matches the pattern, separate the nodename
