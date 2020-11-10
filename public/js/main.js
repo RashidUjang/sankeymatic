@@ -1,7 +1,7 @@
 import { process_sankey } from "./sankeymatic.js";
 import { matchCategory } from "./util.js";
 
-// List of all categories. TODO: Store in a non-global variable?
+// List of all categories & nodes. 
 let categoryList;
 let nodeList;
 
@@ -59,6 +59,29 @@ function addDataIntoTable(data, ind) {
   }
 }
 
+// Create new options and add them into the income and expenses' select elements
+function loadModalListData(categoryList) {
+  let parentIncome = document.getElementById("select-parent-income");
+  let parentExpense = document.getElementById("select-parent-expenses");
+
+  categoryList.forEach((val, ind, arr) => {
+    let option = document.createElement("option");
+
+    option.appendChild(
+      document.createTextNode(
+        matchCategory(val["category_id"], categoryList, 0)
+      )
+    );
+    option.value = val["category_id"];
+
+    if (val["category_type"] == 0) {
+      parentIncome.appendChild(option);
+    } else if (val["category_type"] == 1) {
+      parentExpense.appendChild(option);
+    }
+  });
+}
+
 // Call setup functions upon window load
 window.onload = function () {
   let urls = [
@@ -78,10 +101,10 @@ window.onload = function () {
     .then((data) => {
       nodeList = data[0];
       categoryList = data[1];
-      // export { categoryList }
 
       // Load initial list data
       loadListData(nodeList);
+      loadModalListData(categoryList);
     });
 };
 
@@ -96,37 +119,8 @@ addExpensesButton.addEventListener("click", triggerModal);
 function triggerModal(e) {
   if (e.target.id == "button-add-income") {
     document.getElementById("modal-income").classList.toggle("is-active");
-    loadModalListData("income");
   } else if (e.target.id == "button-add-expenses") {
     document.getElementById("modal-expense").classList.toggle("is-active");
-    loadModalListData("expense");
-  }
-}
-
-// Function to Modal List Dropdown
-function loadModalListData(type) {
-  if (type === "income") {
-    let parent = document.getElementById("select-parent-income");
-
-    categoryList.forEach((val, ind, arr) => {
-      if (val["type"] === "income") {
-        let option = document.createElement("option");
-
-        option.appendChild(document.createTextNode(val["categoryName"]));
-        parent.appendChild(option);
-      }
-    });
-  } else if (type === "expense") {
-    let parent = document.getElementById("select-parent-expenses");
-
-    categoryList.forEach((val, ind, arr) => {
-      if (val["type"] === "expense") {
-        let option = document.createElement("option");
-
-        option.appendChild(document.createTextNode(val["categoryName"]));
-        parent.appendChild(option);
-      }
-    });
   }
 }
 
@@ -165,37 +159,104 @@ addIncomeButtonModal.addEventListener("click", addNode);
 addExpensesButtonModal.addEventListener("click", addNode);
 
 // Function to add node
-function addNode(e) {
+async function addNode(e) {
   e.preventDefault();
   let record;
 
+  // TODO: Perform checking for input to find if its an existing category ID
   if (e.target.id == "button-add-income-modal") {
+    const categoryName = document.getElementById("input-income-category").value;
+    const parentCategoryID = document.getElementById("select-parent-income").value
+
+    console.log(parentCategoryID);
+    const categoryID = await checkCategory(0, categoryName + "", parentCategoryID);
+    const amount = document.getElementById("input-income-amount").value;
+
+    // Build record object
     record = {
-      type: "income",
-      amount: document.getElementById("input-income-amount").value,
-      categoryID: document.getElementById("input-income-category").value,
-      parentCategoryID: "None",
+      record_type: 0,
+      amount: amount,
+      category_id: categoryID
     };
 
-    addDataIntoTable(record, 3);
     closeModal("income");
   } else if (e.target.id == "button-add-expenses-modal") {
+    const categoryName = document.getElementById("input-expenses-category").value;
+    const categoryID = checkCategory(0, categoryName + "", document.getElementById("select-parent-expenses").value);
+    const amount = document.getElementById("input-expenses-amount").value;
+
+    // Build record object
     record = {
-      type: "expense",
-      amount: document.getElementById("input-expenses-amount").value,
-      categoryID: document.getElementById("input-expenses-category").value,
-      parentCategoryID: "None",
+      record_type: 1,
+      amount: amount,
+      category_id: categoryID
     };
 
-    addDataIntoTable(record, 3);
-    closeModal("income");
+    closeModal("expense");
   }
 
-  // TODO: Replace with backend API. Only if successful call the toast.
-  nodeList.push(record);
+  // Create record in DB
+  createRecord(record);
 
   // Display Toast Message
   document.querySelector(".notification").classList.toggle("is-hidden");
+}
+
+async function createRecord(record) {
+  const url = "http://localhost:3000/budget/record";
+  const options = {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(record),
+  };
+
+  try {
+    const response = await fetch(url, options);
+    const jsonResponse = await response.json();
+    console.log(jsonResponse);
+  } catch (e) {
+    console.error(e.message);
+  }
+}
+
+async function checkCategory(categoryType, categoryName, parentCategoryID) {
+  // If category does not exist in list, create new category
+  if (!categoryList.some((val, ind, arr) => val["category_name"] === categoryName && val["category_type"] === categoryType)) {
+    if(parentCategoryID == 0) {
+      parentCategoryID = null;
+    }
+
+    // Build category object
+    let category = {
+      category_type: categoryType,
+      category_name: categoryName,
+      parent_category_id: parentCategoryID,
+    };
+    
+    try {
+      const url = "http://localhost:3000/budget/category";
+      const options = {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(category)
+      };
+
+      const response = await fetch(url, options);
+      const jsonResponse = await response.json();
+
+      return jsonResponse[0]["category_id"]
+    } catch (e) {
+      console.error(e.message);
+    }
+  } else {
+    console.log("Found a category with the same name.");
+  }
 }
 
 // Process Sankey

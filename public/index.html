@@ -673,14 +673,14 @@
           <div class="card-content">
             <h3 class="title is-3">Add Income</h3>
             <div class="item-income">
-              <label for="input-income-amount">Amount</label>
-              <input type="text" id="input-income-amount" class="input" />
               <label for="select-parent-income">Parent Node:</label>
               <div class="select">
-                <select name="" id="select-parent-income"></select>
+                <select name="" id="select-parent-income">
+                  <option value="0">None</option>
+                </select>
               </div>
-              <label for="checkbox-new">New Category?</label>
-              <input type="checkbox" id="checkbox-new" />
+              <label for="input-income-amount">Amount</label>
+              <input type="text" id="input-income-amount" class="input" />
               <label for="input-income-category">Category:</label>
               <input type="text" id="input-income-category" class="input" />
             </div>
@@ -708,8 +708,7 @@
               <label for="select-parent-expenses">Parent Node:</label>
               <div class="select">
                 <select name="" id="select-parent-expenses">
-                  <option value="">Food</option>
-                  <option value="">Transportation</option>
+                  <option value="0">None</option>
                 </select>
               </div>
               <label for="input-expenses-category">Category:</label>
