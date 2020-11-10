@@ -82,8 +82,7 @@ function loadModalListData(categoryList) {
   });
 }
 
-// Call setup functions upon window load
-window.onload = function () {
+function setupTables() {
   let urls = [
     "http://localhost:3000/budget/record",
     "http://localhost:3000/budget/category",
@@ -106,7 +105,21 @@ window.onload = function () {
       loadListData(nodeList);
       loadModalListData(categoryList);
     });
+}
+
+// Call setup functions upon window load
+window.onload = function () {
+  setupTables();
 };
+
+function refreshLists() {
+  const tables = [...document.getElementsByTagName("tbody")];
+  tables.forEach((val, ind, arr) => {
+    val.innerHTML = "";
+  });
+
+  setupTables();
+}
 
 // Add functionalities for both Income and Expense
 const addIncomeButton = document.getElementById("button-add-income");
@@ -163,12 +176,9 @@ async function addNode(e) {
   e.preventDefault();
   let record;
 
-  // TODO: Perform checking for input to find if its an existing category ID
   if (e.target.id == "button-add-income-modal") {
     const categoryName = document.getElementById("input-income-category").value;
     const parentCategoryID = document.getElementById("select-parent-income").value
-
-    console.log(parentCategoryID);
     const categoryID = await checkCategory(0, categoryName + "", parentCategoryID);
     const amount = document.getElementById("input-income-amount").value;
 
@@ -182,7 +192,8 @@ async function addNode(e) {
     closeModal("income");
   } else if (e.target.id == "button-add-expenses-modal") {
     const categoryName = document.getElementById("input-expenses-category").value;
-    const categoryID = checkCategory(0, categoryName + "", document.getElementById("select-parent-expenses").value);
+    const parentCategoryID = document.getElementById("select-parent-expenses").value
+    const categoryID = await checkCategory(1, categoryName + "", parentCategoryID);
     const amount = document.getElementById("input-expenses-amount").value;
 
     // Build record object
@@ -195,8 +206,9 @@ async function addNode(e) {
     closeModal("expense");
   }
 
-  // Create record in DB
+  // Create record in DB and refresh tables
   createRecord(record);
+  refreshLists();
 
   // Display Toast Message
   document.querySelector(".notification").classList.toggle("is-hidden");
@@ -235,7 +247,7 @@ async function checkCategory(categoryType, categoryName, parentCategoryID) {
       category_name: categoryName,
       parent_category_id: parentCategoryID,
     };
-    
+
     try {
       const url = "http://localhost:3000/budget/category";
       const options = {

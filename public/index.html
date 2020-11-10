@@ -128,7 +128,12 @@
               version="1.1"
             ></svg>
           </p>
-          <canvas id="png_preview" height="600" width="600" style="background-color: transparent; display:none;"></canvas>
+          <canvas
+            id="png_preview"
+            height="600"
+            width="600"
+            style="background-color: transparent; display: none"
+          ></canvas>
           <table id="messages">
             <tr>
               <td id="messages_area"></td>
@@ -701,16 +706,15 @@
           <div class="card-content">
             <h3 class="title is-3">Add Expense</h3>
             <div class="item-expenses">
-              <label for="expenses">Amount</label>
-              <input type="text" id="input-expenses-amount" class="input" />
-              <label for="checkbox-new-income">New Category?</label>
-              <input type="checkbox" id="checkbox-new-income" />
               <label for="select-parent-expenses">Parent Node:</label>
               <div class="select">
+                
                 <select name="" id="select-parent-expenses">
                   <option value="0">None</option>
                 </select>
               </div>
+              <label for="expenses">Amount</label>
+              <input type="text" id="input-expenses-amount" class="input" />
               <label for="input-expenses-category">Category:</label>
               <input type="text" class="input" id="input-expenses-category" />
             </div>
