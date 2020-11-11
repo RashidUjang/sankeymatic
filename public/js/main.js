@@ -1,7 +1,7 @@
 import { process_sankey } from "./sankeymatic.js";
 import { matchCategory } from "./util.js";
 
-// List of all categories & nodes. 
+// List of all categories & nodes.
 let categoryList;
 let nodeList;
 
@@ -46,16 +46,57 @@ function addDataIntoTable(data, ind) {
   const button = document.createElement("button");
   button.className = "button is-danger is-outlined is-small";
   button.type = "button";
+  button.addEventListener("click", deleteNode);
   button.appendChild(document.createTextNode("Delete"));
   td.appendChild(button);
+
   tr.appendChild(td);
 
   // Choose depending on type to appear in the income or expenses table
   if (data["record_type"] == "0") {
+    // Add an ID to the row, to be used to know which element to delete
+    tr.id = "i" + data["record_id"];
+
     document.querySelector("#income-list tbody").appendChild(tr);
   }
   if (data["record_type"] == "1") {
+    // Add an ID to the row, to be used to know which element to delete
+    tr.id = "e" + data["record_id"];
+
     document.querySelector("#expenses-list tbody").appendChild(tr);
+  }
+
+  // Delete Listener
+  function deleteNode(e) {
+    const url =
+      "http://localhost:3000/budget/record/" +
+      e.target.parentElement.parentElement.id.slice(1);
+    console.log(url);
+    const options = {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    };
+
+    try {
+      fetch(url, options).then((res) => console.log(res));
+    } catch (err) {
+      console.error(err.message);
+    }
+
+    e.target.parentElement.parentElement.remove();
+    
+    if (
+      document
+        .getElementById("notification-delete-success")
+        .classList.contains("is-hidden")
+    ) {
+      document
+        .getElementById("notification-delete-success")
+        .classList.toggle("is-hidden");
+    }
   }
 }
 
@@ -178,29 +219,40 @@ async function addNode(e) {
 
   if (e.target.id == "button-add-income-modal") {
     const categoryName = document.getElementById("input-income-category").value;
-    const parentCategoryID = document.getElementById("select-parent-income").value
-    const categoryID = await checkCategory(0, categoryName + "", parentCategoryID);
+    const parentCategoryID = document.getElementById("select-parent-income")
+      .value;
+    const categoryID = await checkCategory(
+      0,
+      categoryName + "",
+      parentCategoryID
+    );
     const amount = document.getElementById("input-income-amount").value;
 
     // Build record object
     record = {
       record_type: 0,
       amount: amount,
-      category_id: categoryID
+      category_id: categoryID,
     };
 
     closeModal("income");
   } else if (e.target.id == "button-add-expenses-modal") {
-    const categoryName = document.getElementById("input-expenses-category").value;
-    const parentCategoryID = document.getElementById("select-parent-expenses").value
-    const categoryID = await checkCategory(1, categoryName + "", parentCategoryID);
+    const categoryName = document.getElementById("input-expenses-category")
+      .value;
+    const parentCategoryID = document.getElementById("select-parent-expenses")
+      .value;
+    const categoryID = await checkCategory(
+      1,
+      categoryName + "",
+      parentCategoryID
+    );
     const amount = document.getElementById("input-expenses-amount").value;
 
     // Build record object
     record = {
       record_type: 1,
       amount: amount,
-      category_id: categoryID
+      category_id: categoryID,
     };
 
     closeModal("expense");
@@ -211,7 +263,15 @@ async function addNode(e) {
   refreshLists();
 
   // Display Toast Message
-  document.querySelector(".notification").classList.toggle("is-hidden");
+  if (
+    document
+      .getElementById("notification-add-success")
+      .classList.contains("is-hidden")
+  ) {
+    document
+      .getElementById("notification-add-success")
+      .classList.toggle("is-hidden");
+  }
 }
 
 async function createRecord(record) {
@@ -236,8 +296,14 @@ async function createRecord(record) {
 
 async function checkCategory(categoryType, categoryName, parentCategoryID) {
   // If category does not exist in list, create new category
-  if (!categoryList.some((val, ind, arr) => val["category_name"] === categoryName && val["category_type"] === categoryType)) {
-    if(parentCategoryID == 0) {
+  if (
+    !categoryList.some(
+      (val, ind, arr) =>
+        val["category_name"] === categoryName &&
+        val["category_type"] === categoryType
+    )
+  ) {
+    if (parentCategoryID == 0) {
       parentCategoryID = null;
     }
 
@@ -256,13 +322,13 @@ async function checkCategory(categoryType, categoryName, parentCategoryID) {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(category)
+        body: JSON.stringify(category),
       };
 
       const response = await fetch(url, options);
       const jsonResponse = await response.json();
 
-      return jsonResponse[0]["category_id"]
+      return jsonResponse[0]["category_id"];
     } catch (e) {
       console.error(e.message);
     }
