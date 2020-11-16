@@ -80,8 +80,48 @@ function matchCategory(categoryID, list, parentIndicator) {
 function hasParent(categoryID, list) {
   for (let i = 0; i < list.length; i++) {
     if (categoryID == list[i]["category_id"]) {
-      return list[i]["parent_category_id"] != null
-    } 
+      return list[i]["parent_category_id"] != null;
+    }
+  }
+}
+
+function triggerNotification(type) {
+  console.log(type);
+  let notificationElement = document.getElementById("notification");
+  let notifications = [
+    {
+      id: 1,
+      message: "The record has been successfully added",
+      class: "is-primary",
+    },
+    {
+      id: 2,
+      message: "The record has been successfully deleted",
+      class: "is-primary",
+    },
+    {
+      id: 3,
+      message: "A record with the same name was found",
+      class: "is-danger",
+    },
+  ];
+
+  notifications.forEach((val, ind, arr) => {
+    if (val["id"] == type) {
+      notificationElement.innerText = val["message"];
+
+      if (val["class"] == "is-primary") {
+        notificationElement.classList.add(val["class"]);
+        notificationElement.classList.remove("is-danger");
+      } else if (val["class"] == "is-danger") {
+        notificationElement.classList.add(val["class"]);
+        notificationElement.classList.remove("is-primary");
+      }
+    }
+  });
+
+  if (notificationElement.classList.contains("is-hidden")) {
+    notificationElement.classList.toggle("is-hidden");
   }
 }
 
@@ -92,4 +132,5 @@ export {
   format_a_value,
   matchCategory,
   hasParent,
+  triggerNotification,
 };

@@ -1,5 +1,5 @@
 import { process_sankey } from "./sankeymatic.js";
-import { matchCategory } from "./util.js";
+import { matchCategory, triggerNotification } from "./util.js";
 
 // List of all categories & nodes.
 let categoryList;
@@ -85,16 +85,8 @@ function addDataIntoTable(data, ind) {
     }
 
     e.target.parentElement.parentElement.remove();
-    
-    if (
-      document
-        .getElementById("notification-delete-success")
-        .classList.contains("is-hidden")
-    ) {
-      document
-        .getElementById("notification-delete-success")
-        .classList.toggle("is-hidden");
-    }
+
+    triggerNotification(2);
   }
 }
 
@@ -225,6 +217,10 @@ async function addNode(e) {
       parentCategoryID
     );
     const amount = document.getElementById("input-income-amount").value;
+      closeModal("income");
+    if (categoryID == "Category already exists") {
+      throw "Error"
+    }
 
     // Build record object
     record = {
@@ -233,7 +229,7 @@ async function addNode(e) {
       category_id: categoryID,
     };
 
-    closeModal("income");
+    
   } else if (e.target.id == "button-add-expenses-modal") {
     const categoryName = document.getElementById("input-expenses-category")
       .value;
@@ -244,8 +240,14 @@ async function addNode(e) {
       categoryName + "",
       parentCategoryID
     );
+
+    if (categoryID == "Category already exists") {
+      throw "Error"
+    }
+    
     const amount = document.getElementById("input-expenses-amount").value;
     
+    closeModal("expense");
     // Build record object
     record = {
       record_type: 1,
@@ -253,8 +255,7 @@ async function addNode(e) {
       category_id: categoryID,
     };
 
-    console.log(record);
-    closeModal("expense");
+    
   }
 
   // Create record in DB and refresh tables
@@ -262,15 +263,7 @@ async function addNode(e) {
   refreshLists();
 
   // Display Toast Message
-  if (
-    document
-      .getElementById("notification-add-success")
-      .classList.contains("is-hidden")
-  ) {
-    document
-      .getElementById("notification-add-success")
-      .classList.toggle("is-hidden");
-  }
+  triggerNotification(1);
 }
 
 async function createRecord(record) {
@@ -332,7 +325,8 @@ async function checkCategory(categoryType, categoryName, parentCategoryID) {
       console.error(e.message);
     }
   } else {
-    console.log("Found a category with the same name.");
+    triggerNotification(3);
+    return "Category already exists"
   }
 }
 
