@@ -26,9 +26,7 @@ function addDataIntoTable(data, ind) {
     1
   );
 
-  // Add index number, amount, category and parent category to table
-  th.appendChild(document.createTextNode(ind));
-  tr.appendChild(th);
+  // Add amount, category and parent category to table
 
   td.appendChild(document.createTextNode(amount));
   tr.appendChild(td);
@@ -247,7 +245,7 @@ async function addNode(e) {
       parentCategoryID
     );
     const amount = document.getElementById("input-expenses-amount").value;
-
+    
     // Build record object
     record = {
       record_type: 1,
@@ -255,6 +253,7 @@ async function addNode(e) {
       category_id: categoryID,
     };
 
+    console.log(record);
     closeModal("expense");
   }
 

@@ -77,4 +77,19 @@ function matchCategory(categoryID, list, parentIndicator) {
   }
 }
 
-export { escape_html, is_numeric, fix_separators, format_a_value, matchCategory};
+function hasParent(categoryID, list) {
+  for (let i = 0; i < list.length; i++) {
+    if (categoryID == list[i]["category_id"]) {
+      return list[i]["parent_category_id"] != null
+    } 
+  }
+}
+
+export {
+  escape_html,
+  is_numeric,
+  fix_separators,
+  format_a_value,
+  matchCategory,
+  hasParent,
+};

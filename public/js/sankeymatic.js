@@ -15,10 +15,11 @@ import {
   is_numeric,
   fix_separators,
   format_a_value,
-  matchCategory
+  matchCategory,
+  hasParent,
 } from "./util.js";
 
-import { categoryList } from "./main.js"
+import { categoryList } from "./main.js";
 
 // toggle_panel: hide or show one of the interface panels, by name
 function toggle_panel(el_id) {
@@ -315,7 +316,6 @@ function render_sankey(nodes_in, flows_in, config_in) {
 
   // flow is a function returning coordinates and specs for each flow area
   flow = sankey.link();
-  console.log(flow);
 
   link = svg
     .append("g")
@@ -642,29 +642,106 @@ function process_sankey(inputNodeList) {
     }
   }
 
+  // Massage the nodeList. The parentCategory should be the target of any node that has it. If it does not have it, then the target should be budget (or source, if its an expense record type). For any category that has at least one child, it must sum up all the child's amount to get its actual amount.
   function parseGeneralInputToFlows(inputNodeList) {
-    console.log("inputNodeList: ");
-    console.dir(inputNodeList);
+    let parentCategories = [];
+
+    // // Function to process parents 
+    // function processParents(parents) {
+    //   parents.forEach((val, ind, arr) => {
+    //     let objectParent = {};
+
+    //     if (val["type"] == 0) {
+    //       objectParent["source"] = val["parentCategoryName"];
+    //       objectParent["target"] = "Budget";
+    //     } else if (val["type"] == 1) {
+    //       objectParent["source"] = "Budget";
+    //       objectParent["target"] = val["parentCategoryName"];
+    //     }
+
+    //     objectParent["amount"] = val["amount"];
+    //     good_flows.push(objectParent);
+    //   });
+    // }
+
     inputNodeList.forEach((val, ind, arr) => {
       if (val["record_type"] == 0) {
-        console.log(`Record type ${ind} is income`);
-        console.log(val);
-        good_flows.push({
-          source: matchCategory(val["category_id"], categoryList, 0),
-          target: "Budget",
-          amount: val["amount"].toString()
-        });
-        console.log(good_flows);
+        let record = val;
+        let object = {};
+        let parentCategoryName = matchCategory(
+          val["category_id"],
+          categoryList,
+          1
+        );
+        // Set source as the category name as it will always be category name
+        object["source"] = matchCategory(val["category_id"], categoryList, 0);
+
+        // Check if category has a parent. If it has a parent, need to process that parent to sum up the amounts.
+        if (hasParent(val["category_id"], categoryList)) {
+          object["target"] = parentCategoryName;
+
+          // // Check existence for parentCategory first before pushing using ID
+          // if (
+          //   !parentCategories.some(
+          //     (val, ind, arr) => val["parentCategoryName"] == parentCategoryName
+          //   )
+          // ) {
+          //   parentCategories.push({
+          //     parentCategoryName: parentCategoryName,
+          //     amount: record["amount"],
+          //     type: 0,
+          //   });
+          // } else {
+          //   let index = parentCategories.findIndex((val, ind, arr) => {
+          //     return val["parentCategoryName"] == parentCategoryName
+          //   });
+
+          //   parentCategories[index]["amount"] += record["amount"];
+          // }
+        } else {
+          object["target"] = "Budget";
+        }
+
+        object["amount"] = val["amount"].toString();
+
+        good_flows.push(object);
       } else if (val["record_type"] == 1) {
-        console.log(`Record type ${ind} is expense`);
-        console.log(val);
-        good_flows.push({
-          source: "Budget",
-          target: matchCategory(val["category_id"], categoryList, 0),
-          amount: val["amount"].toString()
-        });
+        let object = {};
+        let parentCategoryName = matchCategory(
+          val["category_id"],
+          categoryList,
+          1
+        );
+
+        // Set source as the category name as it will always be category name
+        object["target"] = matchCategory(val["category_id"], categoryList, 0);
+
+        // Check if category has a parent. If it has a parent, need to process that parent to sum up the amounts.
+        if (hasParent(val["category_id"], categoryList)) {
+          object["source"] = parentCategoryName;
+
+          // Check existence for parentCategory first before pushing using ID
+          if (
+            !parentCategories.some(
+              (val, ind, arr) => val["parentCategoryName"] == parentCategoryName
+            )
+          ) {
+            parentCategories.push({
+              parentCategoryName: parentCategoryName,
+              type: 1,
+            });
+          }
+        } else {
+          object["source"] = "Budget";
+        }
+
+        object["amount"] = val["amount"].toString();
+
+        good_flows.push(object);
       }
-    }) 
+    });
+
+    // processParents(parentCategories);
   }
 
   // BEGIN by resetting all messages:
@@ -687,22 +764,18 @@ function process_sankey(inputNodeList) {
   // parse into structures: approved_nodes, approved_flows, approved_config
   source_lines = raw_source.split("\n");
 
+  // Depending on which type of input is selected, to use the correct parser
   if (
     document
       .getElementById("budget-input-option")
       .parentElement.classList.contains("is-active")
   ) {
-    console.log("Using budget input style");
     parseGeneralInputToFlows(inputNodeList);
   } else {
-    console.log("Using general input style");
     parseTextInputToFlows(source_lines);
   }
 
-  console.log(good_flows);
-  
-  
-
+  console.trace(good_flows);
   // We know max_places now, so we can derive the smallest important difference.
   // Defining it as smallest-input-decimal/10; this lets us work around various
   // binary/decimal math issues.
@@ -840,7 +913,6 @@ function process_sankey(inputNodeList) {
     // e.g. Clinton #CCDDEE
     // e.g. Gondor "Legolas" #998877.25
     // Look for an additional string starting with # for color info
-    console.log(flow);
     matches = flow.target.match(/^(.+)\s+(#\S+)$/);
     if (matches !== null) {
       // IFF the # string matches the pattern, separate the nodename
